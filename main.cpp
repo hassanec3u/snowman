@@ -94,12 +94,13 @@ bool scene_intersect(const Vec3f &orig, const Vec3f &dir, const std::vector<Sphe
         float d = -(orig.y + 4) / dir.y; // the checkerboard plane has equation y = -4
         Vec3f pt = orig + dir * d;
         if (d > 0 && fabs(pt.x) < 10 && pt.z < -10 && pt.z > -30 && d < spheres_dist) {
-            checkerboard_dist = d;
-            hit = pt;
-            N = Vec3f(0, 1, 0);
-            material.diffuse_color =
-                    (int(.5 * hit.x + 1000) + int(.5 * hit.z)) & 1 ? Vec3f(.3, .3, .3) : Vec3f(.3, .2, .1);
-        }
+    checkerboard_dist = d;
+    hit = pt;
+    N = Vec3f(0, 1, 0);
+    // Checkerboard pattern
+    float pattern = (int(.5 * hit.x + 1000) + int(.5 * hit.z)) & 1;
+    material.diffuse_color = pattern ? Vec3f(0.0, 0.0, 0.0) : Vec3f(1.0, 1.0, 1.0);
+}
     }
     return std::min(spheres_dist, checkerboard_dist) < 1000;
 }
@@ -149,9 +150,13 @@ cast_ray(const Vec3f &orig, const Vec3f &dir, const std::vector<Sphere> &spheres
 }
 
 void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights) {
-    const int width = 1024;
-    const int height = 768;
+    const int width = 1500;
+    const int height = 900;
+
     const float fov = M_PI / 3.;
+
+    Vec3f camera_position(2, 5, 8); // position de la camera
+
     std::vector<Vec3f> framebuffer(width * height);
 
 #pragma omp parallel for
@@ -160,7 +165,7 @@ void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights
             float dir_x = (i + 0.5) - width / 2.;
             float dir_y = -(j + 0.5) + height / 2.;    // this flips the image at the same time
             float dir_z = -height / (2. * tan(fov / 2.));
-framebuffer[i + j * width] = cast_ray(Vec3f(2, 4, 8), Vec3f(dir_x, dir_y, dir_z).normalize(), spheres, lights);
+        framebuffer[i + j * width] = cast_ray(camera_position, Vec3f(dir_x, dir_y, dir_z).normalize(), spheres, lights);
 
         }
     }
@@ -201,15 +206,23 @@ int main() {
 
     //affichage des spheres represent le corps du snowman
     std::vector<Sphere> spheres;
-    Material snow_body(1.0, Vec4f(0.6, 0.3, 0.1, 0.0), Vec3f(0.95, 0.95, 0.95), 50.);
-    spheres.push_back(Sphere(Vec3f(0, 2, -16), 1.3, snow_body));
+    Material snow_body(1.0, Vec4f(0.75, 0.1, 0.0, 0.0), Vec3f(1.0, 1.0, 1.0), 50.);
+
+    //affichage du corps
+    spheres.push_back(Sphere(Vec3f(0, 2.4, -16), 1.3, snow_body));
     spheres.push_back(Sphere(Vec3f(0, 0, -16), 1.5, snow_body));
     spheres.push_back(Sphere(Vec3f(0, -2, -16), 1.7, snow_body));
 
-    //affichage
+    //affichage des yeux
     Material snow_eyes(1.0, Vec4f(0.6, 0.3, 0.1, 0.0), Vec3f(0.0, 0.0, 0.0), 50.);
-    spheres.push_back(Sphere(Vec3f(-0.4, 2.5, -15), 0.25, snow_eyes));
-    spheres.push_back(Sphere(Vec3f(0.4, 2.5, -15), 0.25, snow_eyes));
+    spheres.push_back(Sphere(Vec3f(-0.45, 3, -15), 0.2, snow_eyes));
+    spheres.push_back(Sphere(Vec3f(0.45, 3, -15), 0.2, snow_eyes));
+
+    //affichage des bouton sur le ventre
+    Material snow_button(1.0, Vec4f(0.6, 0.3, 0.1, 0.0), Vec3f(0.8, 0.0, 0.0), 50.);
+    spheres.push_back(Sphere(Vec3f(0, 1, -15), 0.2, snow_button));
+    spheres.push_back(Sphere(Vec3f(0, 0.5, -14.65), 0.2, snow_button));
+    spheres.push_back(Sphere(Vec3f(0, 0, -14.6), 0.2, snow_button));
 
 
 
