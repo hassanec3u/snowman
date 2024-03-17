@@ -183,6 +183,19 @@ void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights
 }
 
 
+    // Fonction lerp pour les flottants
+    float lerp(float a, float b, float t) {
+        return a + t * (b - a);
+    }
+
+    // Fonction lerp pour les vecteurs
+    Vec3f lerp(const Vec3f &a, const Vec3f &b, float t) {
+        return Vec3f(lerp(a.x, b.x, t),
+                    lerp(a.y, b.y, t),
+                    lerp(a.z, b.z, t));
+    }
+
+
 int main() {
     int n = -1;
     unsigned char *pixmap = stbi_load("../envmap.jpg", &envmap_width, &envmap_height, &n, 0);
@@ -223,6 +236,34 @@ int main() {
     spheres.push_back(Sphere(Vec3f(0, 1, -15), 0.2, snow_button));
     spheres.push_back(Sphere(Vec3f(0, 0.5, -14.65), 0.2, snow_button));
     spheres.push_back(Sphere(Vec3f(0, 0, -14.6), 0.2, snow_button));
+
+    
+    // façon 1
+    // Define the material for the orange nose
+   // Material snow_nose(1.0, Vec4f(0.9, 0.1, 0.0, 0.0), Vec3f(1.0, 0.5, 0.0), 10.);
+    // Add the nose to the snowman
+    //spheres.push_back(Sphere(Vec3f(0, 2.6, -14.7), 0.3, snow_nose));
+
+    // le nez pointé et decaler 
+    Material snow_nose(1.0, Vec4f(0.9, 0.1, 0.0, 0.0), Vec3f(1.0, 0.5, 0.0), 10.);
+    Vec3f nose_tip_position = Vec3f(0, 2.6, -14.7); // La pointe du nez est plus proche de la caméra
+    float nose_length = 1; // Longueur du nez
+    float nose_base_radius = 0.2; // Rayon à la base
+    int nose_pieces = 6; // Nombre de sphères pour former le nez
+
+    for (int i = 0; i < nose_pieces; i++) {
+        float progress = (float)i / (nose_pieces - 1);
+        float radius = lerp(nose_base_radius, 0.05, progress); // Lerp est une fonction linéaire pour interpoler entre deux valeurs
+        Vec3f position = lerp(nose_tip_position, nose_tip_position + Vec3f(0, 0, nose_length), progress); // La position s'éloigne de la pointe
+        if (progress > 0.5) { // decaler apres la moitié du nez
+        float offset_progress = (progress - 0.5f) * 2.0f; // 0 au milieu, jusqu'à 1 à la pointe
+        position.x += offset_progress * 0.2; // Decaler de plus en plus vers la pointe
+        }
+
+        
+        spheres.push_back(Sphere(position, radius, snow_nose));
+    }
+
 
 
 
