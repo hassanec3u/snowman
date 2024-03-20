@@ -76,8 +76,7 @@ Vec3f refract(const Vec3f &I, const Vec3f &N, const float eta_t, const float eta
                                                    sqrtf(k)); // k<0 = total reflection, no ray to refract. I refract it anyways, this has no physical meaning
 }
 
-bool scene_intersect(const Vec3f &orig, const Vec3f &dir, const std::vector<Sphere> &spheres, Vec3f &hit, Vec3f &N,
-                     Material &material) {
+bool scene_intersect(const Vec3f &orig, const Vec3f &dir, const std::vector<Sphere> &spheres, Vec3f &hit, Vec3f &N, Material &material) {
     float spheres_dist = std::numeric_limits<float>::max();
     for (size_t i = 0; i < spheres.size(); i++) {
         float dist_i;
@@ -94,16 +93,32 @@ bool scene_intersect(const Vec3f &orig, const Vec3f &dir, const std::vector<Sphe
         float d = -(orig.y + 4) / dir.y; // the checkerboard plane has equation y = -4
         Vec3f pt = orig + dir * d;
         if (d > 0 && fabs(pt.x) < 10 && pt.z < -10 && pt.z > -30 && d < spheres_dist) {
-    checkerboard_dist = d;
-    hit = pt;
-    N = Vec3f(0, 1, 0);
-    // Checkerboard pattern
-    float pattern = (int(.5 * hit.x + 1000) + int(.5 * hit.z)) & 1;
-    material.diffuse_color = pattern ? Vec3f(0.0, 0.0, 0.0) : Vec3f(1.0, 1.0, 1.0);
-}
+            checkerboard_dist = d;
+            hit = pt;
+            N = Vec3f(0, 1, 0);
+
+            // Ajustez ces valeurs pour modifier la densité et la complexité du motif.
+            Vec3f center(0, -4, -18); // centre
+            float pattern_width = 1; // Bandes plus étroites pour une alternance plus fréquente
+            Vec3f diff = hit - center;
+            float radius = diff.norm(); // Distance du centre
+            float angle = atan2(diff.z, diff.x); // Position angulaire autour du centre
+
+            // Déterminez la couleur de la bague en fonction de la distance et de l'angle
+            bool distance_pattern = static_cast<int>(floor(radius / pattern_width)) % 2;
+            bool angle_pattern = static_cast<int>(floor(angle / (M_PI / 20))) % 2; // Divise le cercle en 40 segments
+
+            //Combinez les motifs pour plus de variété
+            if (distance_pattern ^ angle_pattern) { // Opération XOR pour un mélange de motifs intéressant
+                material.diffuse_color = Vec3f(0.0, 0.0, 0.0); // Black
+            } else {
+                material.diffuse_color = Vec3f(1.0, 1.0, 1.0); // White
+            }
+        }
     }
     return std::min(spheres_dist, checkerboard_dist) < 1000;
 }
+
 
 Vec3f
 cast_ray(const Vec3f &orig, const Vec3f &dir, const std::vector<Sphere> &spheres, const std::vector<Light> &lights,
@@ -155,7 +170,7 @@ void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights
 
     const float fov = M_PI / 3.;
 
-    Vec3f camera_position(2, 5, 8); // position de la camera
+    Vec3f camera_position(3, 4, 8); // position de la camera
 
     std::vector<Vec3f> framebuffer(width * height);
 
@@ -227,11 +242,11 @@ int main() {
     spheres.push_back(Sphere(Vec3f(0, -2, -16), 1.7, snow_body));
 
     //affichage des yeux
-    Material snow_eyes(1.0, Vec4f(0.6, 0.3, 0.1, 0.0), Vec3f(0.0, 0.0, 0.0), 50.);
+    Material snow_eyes(1.0, Vec4f(0.75, 0.1, 0.0, 0.0), Vec3f(0.0, 0.0, 0.0), 50.);
     spheres.push_back(Sphere(Vec3f(-0.45, 3, -15), 0.2, snow_eyes));
     spheres.push_back(Sphere(Vec3f(0.45, 3, -15), 0.2, snow_eyes));
 
-    //affichage des bouton sur le ventre
+    //affichage des boutons sur le ventre
     Material snow_button(1.0, Vec4f(0.6, 0.3, 0.1, 0.0), Vec3f(0.8, 0.0, 0.0), 50.);
     spheres.push_back(Sphere(Vec3f(0, 1, -15), 0.2, snow_button));
     spheres.push_back(Sphere(Vec3f(0, 0.5, -14.65), 0.2, snow_button));
@@ -260,7 +275,7 @@ int main() {
         position.x += offset_progress * 0.2; // Decaler de plus en plus vers la pointe
         }
 
-        
+
         spheres.push_back(Sphere(position, radius, snow_nose));
     }
 
@@ -270,37 +285,29 @@ int main() {
     Vec3f left_branch = Vec3f(-1.5, 0.27, -16);
     Vec3f right_arm_start = Vec3f(1.5, 0.5, -16); // Point de départ du bras droit
     Vec3f right_branch = Vec3f(1.5, 0.27, -16);
-    float arm_length = 1.0; // Longueur totale du bras
-    
+    float arm_radius = 0.08; // Rayon des sphères pour les bras
 
     // Créer le bras gauche
     for (int i = 0; i < 20; i++) {
         if(i > 10){
-            
-            Vec3f arm_position = left_branch + Vec3f(-0.06 * i, 0.06 * i, 0); 
+
+            Vec3f arm_position = left_branch + Vec3f(-0.06 * i, 0.06 * i, 0);
             spheres.push_back(Sphere(arm_position, arm_radius, stick_material));
         }
-        Vec3f arm_position = left_arm_start + Vec3f(-0.06 * i, 0.03 * i, 0); // Chaque sphère est un peu plus loin et un peu plus haute
+        Vec3f arm_position = left_arm_start + Vec3f(-0.06 * i, 0.03 * i, 0); // Chaque sphère est decalé un peu plus loin et un peu plus haut
         spheres.push_back(Sphere(arm_position, arm_radius, stick_material));
     }
 
-    // Créer le bras droit 
+    // Créer le bras droit
     for (int i = 0; i < 20; i++) {
         if(i > 10){
             
             Vec3f arm_position = right_branch + Vec3f(0.06 * i, 0.06 * i, 0); 
             spheres.push_back(Sphere(arm_position, arm_radius, stick_material));
         }
-        Vec3f arm_position = right_arm_start + Vec3f(0.06 * i, 0.03 * i, 0); // Chaque sphère est un peu plus loin et un peu plus haute
+        Vec3f arm_position = right_arm_start + Vec3f(0.06 * i, 0.03 * i, 0); // Chaque sphère est decalé un peu plus loin et un peu plus haut
         spheres.push_back(Sphere(arm_position, arm_radius, stick_material));
     }
-
-
-    
-
-
-
-
 
 
     //affichages des lumieres
