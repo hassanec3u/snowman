@@ -265,13 +265,13 @@ int main() {
     }
 
 
-    Material stick_material(1.0, Vec4f(0.9, 0.1, 0.0, 0.0), Vec3f(0.35, 0.16, 0.08), 10.); // Couleur marron pour les branches
+    Material stick_material(1.0, Vec4f(0.9, 0.1, 0.0, 0.0), Vec3f(0.35, 0.16, 0.08), 10.); 
     Vec3f left_arm_start = Vec3f(-1.5, 0.5, -16); // Point de départ du bras gauche
     Vec3f left_branch = Vec3f(-1.5, 0.27, -16);
     Vec3f right_arm_start = Vec3f(1.5, 0.5, -16); // Point de départ du bras droit
     Vec3f right_branch = Vec3f(1.5, 0.27, -16);
     float arm_length = 1.0; // Longueur totale du bras
-    float arm_radius = 0.05; // Rayon des sphères pour les bras
+    
 
     // Créer le bras gauche
     for (int i = 0; i < 20; i++) {
@@ -284,7 +284,7 @@ int main() {
         spheres.push_back(Sphere(arm_position, arm_radius, stick_material));
     }
 
-    // Créer le bras droit de manière similaire
+    // Créer le bras droit 
     for (int i = 0; i < 20; i++) {
         if(i > 10){
             
