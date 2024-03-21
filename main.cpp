@@ -310,6 +310,24 @@ int main() {
     }
 
 
+
+    Material mouth_material(1.0, Vec4f(0.9, 0.1, 0.0, 0.0), Vec3f(0.0, 0.0, 0.0), 10.); 
+    Vec3f mouth_center = Vec3f(0.25, 2.3, -13); //  le centre de la bouche sur le visage
+    float mouth_width = 0.6; 
+    float mouth_radius = 0.05; 
+    int mouth_pieces = 9; 
+
+    
+    for (int i = 0; i < mouth_pieces; ++i) {
+        float x_offset = lerp(-mouth_width / 2, mouth_width / 2, static_cast<float>(i) / (mouth_pieces - 1));
+        float y_offset = -sqrt(mouth_width * mouth_width / 4 - x_offset * x_offset) / 2;
+        Vec3f sphere_position = mouth_center + Vec3f(x_offset, y_offset, 0);
+        spheres.push_back(Sphere(sphere_position, mouth_radius, mouth_material));
+    }
+
+
+
+
     //affichages des lumieres
     std::vector<Light> lights;
     lights.push_back(Light(Vec3f(-20, 20, 20), 1.5));
